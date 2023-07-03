@@ -8,7 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviderGetKt;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).attachToRecyclerView(recyclerView);
 
-        ActivityResultLauncher<Intent> someActivityResultLauncher = registerForActivityResult(
+        ActivityResultLauncher<Intent> addEditActivityEditResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
@@ -82,9 +81,55 @@ public class MainActivity extends AppCompatActivity {
                         if (result.getResultCode() == Activity.RESULT_OK) {
 
                             Intent data = result.getData();
-                            String title = data.getStringExtra(AddNoteActivity.EXTRA_TITLE);
-                            String description = data.getStringExtra(AddNoteActivity.EXTRA_DESCRIPTION);
-                            int priority = data.getIntExtra(AddNoteActivity.EXTRA_PRIORITY, 1);
+                            int id = data.getIntExtra(AddEditNoteActivity.EXTRA_ID, -1);
+
+                            if(id == -1){
+                                Toast.makeText(MainActivity.this, "Note can't be updated", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            String title = data.getStringExtra(AddEditNoteActivity.EXTRA_TITLE);
+                            String description = data.getStringExtra(AddEditNoteActivity.EXTRA_DESCRIPTION);
+                            int priority = data.getIntExtra(AddEditNoteActivity.EXTRA_PRIORITY, 1);
+
+                            Note note = new Note(title, description, priority);
+                            note.setId(id);
+                            noteViewModel.update(note);
+
+                            Toast.makeText(MainActivity.this, "Note updated", Toast.LENGTH_SHORT).show();
+
+                        }else {
+                            Toast.makeText(MainActivity.this, "Note not saved", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+        adapter.setOnItemClickListener(new NoteAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(Note note) {
+
+                Intent intent = new Intent(MainActivity.this, AddEditNoteActivity.class);
+                intent.putExtra(AddEditNoteActivity.EXTRA_ID, note.getId());
+                intent.putExtra(AddEditNoteActivity.EXTRA_TITLE, note.getTitle());
+                intent.putExtra(AddEditNoteActivity.EXTRA_DESCRIPTION, note.getDescription());
+                intent.putExtra(AddEditNoteActivity.EXTRA_PRIORITY, note.getPriority());
+                addEditActivityEditResultLauncher.launch(intent);
+
+            }
+        });
+
+        ActivityResultLauncher<Intent> addEditActivityAddResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+
+                        if (result.getResultCode() == Activity.RESULT_OK) {
+
+                            Intent data = result.getData();
+                            String title = data.getStringExtra(AddEditNoteActivity.EXTRA_TITLE);
+                            String description = data.getStringExtra(AddEditNoteActivity.EXTRA_DESCRIPTION);
+                            int priority = data.getIntExtra(AddEditNoteActivity.EXTRA_PRIORITY, 1);
 
                             Note note = new Note(title, description, priority);
                             noteViewModel.insert(note);
@@ -100,8 +145,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                Intent intent = new Intent(MainActivity.this, AddNoteActivity.class);
-                someActivityResultLauncher.launch(intent);
+                Intent intent = new Intent(MainActivity.this, AddEditNoteActivity.class);
+                addEditActivityAddResultLauncher.launch(intent);
 
             }
         });
