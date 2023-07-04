@@ -27,7 +27,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private NoteViewModel noteViewModel;
+    private NoteViewModel noteViewModel;//
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
